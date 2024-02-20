@@ -3,30 +3,30 @@ package edu.neu.coe.csye7200.asstrs
 import scala.util.Random
 
 /**
-  * Monadic trait which defines a random-state.
-  *
-  * Created by scalaprof on 9/24/16.
-  *
-  * @tparam T the underlying type of this random state, i.e. the type of the result of calling get
-  */
+ * Monadic trait which defines a random-state.
+ *
+ * Created by scalaprof on 9/24/16.
+ *
+ * @tparam T the underlying type of this random state, i.e. the type of the result of calling get
+ */
 trait RandomState[T] {
   /**
-    * @return the next random state in the pseudo-random series
-    */
+   * @return the next random state in the pseudo-random series
+   */
   def next: RandomState[T]
 
   /**
-    * @return the value of this random state
-    */
+   * @return the value of this random state
+   */
   def get: T
 
   /**
-    * Method to map this random state into another random state
-    *
-    * @param f the function to map a T value into a U value
-    * @tparam U the underlying type of the resulting random state
-    * @return a new random state
-    */
+   * Method to map this random state into another random state
+   *
+   * @param f the function to map a T value into a U value
+   * @tparam U the underlying type of the resulting random state
+   * @return a new random state
+   */
   def map[U](f: T => U): RandomState[U]
 
   /**
@@ -38,52 +38,39 @@ trait RandomState[T] {
    */
   // Hint: Think of the input and output, find the appropriate method that achieve this.
   // 10 points
-  def flatMap[U](f: T => RandomState[U]): RandomState[U] = {
-// TO BE IMPLEMENTED 
-???
-  }
+  def flatMap[U](f: T => RandomState[U]): RandomState[U] = f(get)
 
   /**
    * @return a stream of T values
    */
   // Hint: This a recursively method and it concatenate current element with following elements.
   // 12 points
-  def toStream: LazyList[T] = {
-// TO BE IMPLEMENTED 
-???
-  }
+  def toStream: LazyList[T] = LazyList.cons(get, next.toStream)
 }
 
 /**
-  * A concrete implementation of RandomState based on the Java random number generator
-  *
-  * @param n the random Long that characterizes this random state
-  * @param g the function which maps a Long value into a T
-  * @tparam T the underlying type of this random state, i.e. the type of the result of calling get
-  */
+ * A concrete implementation of RandomState based on the Java random number generator
+ *
+ * @param n the random Long that characterizes this random state
+ * @param g the function which maps a Long value into a T
+ * @tparam T the underlying type of this random state, i.e. the type of the result of calling get
+ */
 case class JavaRandomState[T](n: Long, g: Long => T) extends RandomState[T] {
+
+  private val random = new scala.util.Random(n)
+  private lazy val state = random.nextLong
+
   // Hint: Remember to use the "seed" to generate next RandomState.
   // 7 points
-  def next: RandomState[T] = {
-// TO BE IMPLEMENTED 
-???
-  }
+  def next: RandomState[T] = JavaRandomState(state, g)
 
-  /*END*/
   // Hint: Think of the input and output.
   // 5 points
-  def get: T = {
-// TO BE IMPLEMENTED 
-???
-  }
+  def get: T = g(n)
 
-  /*END*/
   // Hint: This one need function composition.
   // 13 points
-  def map[U](f: T => U): RandomState[U] = {
-// TO BE IMPLEMENTED 
-???
-  }
+  def map[U](f: T => U): RandomState[U] = JavaRandomState(n, g andThen f)
 }
 
 case class DoubleRandomState(n: Long) extends RandomState[Double] {
@@ -113,9 +100,8 @@ object RandomState {
 
   // Hint: This is a easy one, remember that it not only convert a Long to a Double but also scale down the number to -1 ~ 1.
   // 4 points
-  val longToDouble: Long => Double =
-// TO BE IMPLEMENTED 
-???
+  val longToDouble: Long => Double = n => n.toDouble / Long.MaxValue
+
   val doubleToUniformDouble: Double => UniformDouble = { x => UniformDouble((x + 1) / 2) }
 }
 
@@ -124,9 +110,9 @@ object BetterRandomState {
 }
 
 /**
-  * This is essentially a wrapper of Double where (implicitly) 0 <= x <= 1.
-  * Note that we would like to specify it as a Value type but require statements are not legal in Value types
-  */
+ * This is essentially a wrapper of Double where (implicitly) 0 <= x <= 1.
+ * Note that we would like to specify it as a Value type but require statements are not legal in Value types
+ */
 case class UniformDouble(x: Double) extends AnyVal {
   //  if(x<0.0 || x>1.0) throw new RuntimeException(s"UniformDouble may not be outside range 0->1: $x")
   def +(y: Double): UniformDouble = {
