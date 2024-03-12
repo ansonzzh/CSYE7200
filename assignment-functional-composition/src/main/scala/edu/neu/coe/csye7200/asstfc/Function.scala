@@ -1,6 +1,6 @@
 package edu.neu.coe.csye7200.asstfc
 
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /**
  * This object extends scala.Function to include more methods that apply to functions.
@@ -21,8 +21,10 @@ object Function {
    * @return a value of R, wrapped in Try
    */
   def map2[T1, T2, R](t1y: Try[T1], t2y: Try[T2])(f: (T1, T2) => R): Try[R] =
-  // TO BE IMPLEMENTED 
-???
+    for {
+      t1 <- t1y
+      t2 <- t2y
+    } yield f(t1, t2)
 
   /**
    * Lift function to transform a function f of type T=>R into a function of type Try[T]=>Try[R]
@@ -33,9 +35,10 @@ object Function {
    * @return a function of type Try[T]=>Try[R]
    */
   // You know this one
-  def lift[T, R](f: T => R): Try[T] => Try[R] =
-  // TO BE IMPLEMENTED 
-???
+  def lift[T, R](f: T => R): Try[T] => Try[R] = {
+    case Success(value) => Try(f(value))
+    case failure: Failure[_] => failure.asInstanceOf[Try[R]]
+  }
 
   /**
    * Lift function to transform a function f of type (T1,T2)=>R into a function of type (Try[T1],Try[T2])=>Try[R]
@@ -47,9 +50,7 @@ object Function {
    * @return a function of type (Try[T1],Try[T2])=>Try[R]
    */
   // Think Simple, Elegant, Obvious
-  def lift2[T1, T2, R](f: (T1, T2) => R): (Try[T1], Try[T2]) => Try[R] =
-  // TO BE IMPLEMENTED 
-???
+  def lift2[T1, T2, R](f: (T1, T2) => R): (Try[T1], Try[T2]) => Try[R] = (try1, try2) => map2(try1, try2)(f)
 
   /**
    * Lift function to transform a function f of type (T1,T2,T3)=>R into a function of type (Try[T1],Try[T2],Try[T3])=>Try[R]
@@ -62,9 +63,7 @@ object Function {
    * @return a function of type (Try[T1],Try[T2],Try[T3])=>Try[R]
    */
   // If you can do lift2, you can do lift3
-  def lift3[T1, T2, T3, R](f: (T1, T2, T3) => R): (Try[T1], Try[T2], Try[T3]) => Try[R] =
-  // TO BE IMPLEMENTED 
-???
+  def lift3[T1, T2, T3, R](f: (T1, T2, T3) => R): (Try[T1], Try[T2], Try[T3]) => Try[R] = (try1, try2, try3) => map3(try1, try2, try3)(f)
 
   /**
    * The map3 function. Much like map2
@@ -80,8 +79,11 @@ object Function {
    * @return a value of R, wrapped in Try
    */
   def map3[T1, T2, T3, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3])(f: (T1, T2, T3) => R): Try[R] =
-  // TO BE IMPLEMENTED 
-???
+    for {
+      v1 <- t1y
+      v2 <- t2y
+      v3 <- t3y
+    } yield f(v1, v2, v3)
 
   /**
    * Lift function to transform a function f of type (T1,T2,T3,T4,T5,T6,T7)=>R into a function of type (Try[T1],Try[T2],Try[T3],Try[T4],Try[T5],Try[T6],Try[T7])=>Try[R]
@@ -100,16 +102,22 @@ object Function {
   // If you can do lift3, you can do lift7
   def lift7[T1, T2, T3, T4, T5, T6, T7, R](f: (T1, T2, T3, T4, T5, T6, T7) => R):
   (Try[T1], Try[T2], Try[T3], Try[T4], Try[T5], Try[T6], Try[T7]) => Try[R] =
-  // TO BE IMPLEMENTED 
-???
+    (try1, try2, try3, try4, try5, try6, try7) => map7(try1, try2, try3, try4, try5, try6, try7)(f)
 
   /**
    * You get the idea...
    */
   def map7[T1, T2, T3, T4, T5, T6, T7, R](t1y: Try[T1], t2y: Try[T2], t3y: Try[T3], t4y: Try[T4], t5y: Try[T5], t6y: Try[T6], t7y: Try[T7])
                                          (f: (T1, T2, T3, T4, T5, T6, T7) => R): Try[R] =
-  // TO BE IMPLEMENTED 
-???
+    for {
+      v1 <- t1y
+      v2 <- t2y
+      v3 <- t3y
+      v4 <- t4y
+      v5 <- t5y
+      v6 <- t6y
+      v7 <- t7y
+    } yield f(v1, v2, v3, v4, v5, v6, v7)
 
   /**
    * This method inverts the order of the first two parameters of a two-(or more-)parameter curried function.
@@ -122,9 +130,7 @@ object Function {
    */
   // Hint: think about writing an anonymous function that takes a t2, then a t1 and returns the appropriate result
   // NOTE: you won't be able to use the "_" character here because the compiler infers an ordering that you don't want
-  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R =
-  // TO BE IMPLEMENTED 
-???
+  def invert2[T1, T2, R](f: T1 => T2 => R): T2 => T1 => R = t2 => t1 => f(t1)(t2)
 
   /**
    * This method inverts the order of the first three parameters of a three-(or more-)parameter curried function.
@@ -137,9 +143,7 @@ object Function {
    * @return a curried function which takes the third parameter first, then the second, etc.
    */
   // If you can do invert2, you can do this one too
-  def invert3[T1, T2, T3, R](f: T1 => T2 => T3 => R): T3 => T2 => T1 => R =
-  // TO BE IMPLEMENTED 
-???
+  def invert3[T1, T2, T3, R](f: T1 => T2 => T3 => R): T3 => T2 => T1 => R = t3 => t2 => t1 => f(t1)(t2)(t3)
 
   /**
    * This method inverts the order of the first four parameters of a four-(or more-)parameter curried function.
@@ -153,9 +157,7 @@ object Function {
    * @return a curried function which takes the fourth parameter first, then the third, etc.
    */
   // If you can do invert3, you can do this one too
-  def invert4[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): T4 => T3 => T2 => T1 => R =
-  // TO BE IMPLEMENTED 
-???
+  def invert4[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): T4 => T3 => T2 => T1 => R = t4 => t3 => t2 => t1 => f(t1)(t2)(t3)(t4)
 
   /**
    * This method uncurries the first two parameters of a three- (or more-)
@@ -171,9 +173,7 @@ object Function {
    * @return a (curried) function of type (T1,T2)=>T4=>R
    */
   // This one is a bit harder. But again, think in terms of an anonymous function that is what you want to return
-  def uncurried2[T1, T2, T3, R](f: T1 => T2 => T3 => R): (T1, T2) => T3 => R =
-  // TO BE IMPLEMENTED 
-???
+  def uncurried2[T1, T2, T3, R](f: T1 => T2 => T3 => R): (T1, T2) => T3 => R = (t1, t2) => t3 => f(t1)(t2)(t3)
 
   /**
    * This method uncurries the first three parameters of a four- (or more-)
@@ -190,9 +190,7 @@ object Function {
    * @return a (curried) function of type (T1,T2,T3)=>T4=>R
    */
   // If you can do uncurried2, then you can do this one
-  def uncurried3[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): (T1, T2, T3) => T4 => R =
-  // TO BE IMPLEMENTED 
-???
+  def uncurried3[T1, T2, T3, T4, R](f: T1 => T2 => T3 => T4 => R): (T1, T2, T3) => T4 => R = (t1, t2, t3) => t4 => f(t1)(t2)(t3)(t4)
 
   /**
    * This method uncurries the first three parameters of a four- (or more-)
@@ -210,8 +208,7 @@ object Function {
    */
   // If you can do uncurried3, then you can do this one
   def uncurried7[T1, T2, T3, T4, T5, T6, T7, T8, R](f: T1 => T2 => T3 => T4 => T5 => T6 => T7 => T8 => R): (T1, T2, T3, T4, T5, T6, T7) => T8 => R =
-  // TO BE IMPLEMENTED 
-???
+    (t1, t2, t3, t4, t5, t6, t7) => t8 => f(t1)(t2)(t3)(t4)(t5)(t6)(t7)(t8)
 
 
   def sequence[X](xys: Seq[Try[X]]): Try[Seq[X]] = xys.foldLeft(Try(Seq[X]())) {

@@ -1,27 +1,27 @@
 package edu.neu.coe.csye7200.asstfc
 
+import spray.json._
 import scala.collection.mutable
 import scala.io.{Codec, Source}
 import scala.util._
-import spray.json._
 
 /**
-  * This is a variation on the previous Movie class (in edu.neu.coe.csye._7200.ingest)
-  * This class represents a Movie from the IMDB data file on Kaggle.
-  * Although the limitation on 22 fields in a case class has partially gone away, it's still convenient to group the different attributes together into logical classes.
-  *
-  * Created by scalaprof on 9/12/16.
-  */
+ * This is a variation on the previous Movie class (in edu.neu.coe.csye._7200.ingest)
+ * This class represents a Movie from the IMDB data file on Kaggle.
+ * Although the limitation on 22 fields in a case class has partially gone away, it's still convenient to group the different attributes together into logical classes.
+ *
+ * Created by scalaprof on 9/12/16.
+ */
 case class Movie(format: Format, production: Production, reviews: Reviews, director: Principal, actor1: Principal, actor2: Principal, actor3: Principal, title: String, genres: Seq[String], plotKeywords: Seq[String], imdb: String)
 
 /**
-  * The movie format (including language and duration).
-  *
-  * @param color       whether filmed in color
-  * @param language    the native language of the characters
-  * @param aspectRatio the aspect ratio of the film
-  * @param duration    its length in minutes
-  */
+ * The movie format (including language and duration).
+ *
+ * @param color       whether filmed in color
+ * @param language    the native language of the characters
+ * @param aspectRatio the aspect ratio of the film
+ * @param duration    its length in minutes
+ */
 case class Format(color: Boolean, language: String, aspectRatio: Double, duration: Int) {
   override def toString: String = {
     val x = if (color) "Color" else "B&W"
@@ -30,13 +30,13 @@ case class Format(color: Boolean, language: String, aspectRatio: Double, duratio
 }
 
 /**
-  * The production: its country, year, and financials
-  *
-  * @param country   country of origin
-  * @param budget    production budget in US dollars
-  * @param gross     gross earnings (?)
-  * @param titleYear the year the title was registered (?)
-  */
+ * The production: its country, year, and financials
+ *
+ * @param country   country of origin
+ * @param budget    production budget in US dollars
+ * @param gross     gross earnings (?)
+ * @param titleYear the year the title was registered (?)
+ */
 case class Production(country: String, budget: Int, gross: Int, titleYear: Int) {
   def isKiwi: Boolean = this match {
     case Production("New Zealand", _, _, _) => true
@@ -45,28 +45,28 @@ case class Production(country: String, budget: Int, gross: Int, titleYear: Int) 
 }
 
 /**
-  * Information about various forms of review, including the content rating.
-  */
+ * Information about various forms of review, including the content rating.
+ */
 case class Reviews(imdbScore: Double, facebookLikes: Int, contentRating: Rating, numUsersReview: Int, numUsersVoted: Int, numCriticReviews: Int, totalFacebookLikes: Int)
 
 /**
-  * A cast or crew principal
-  *
-  * @param name          name
-  * @param facebookLikes number of FaceBook likes
-  */
+ * A cast or crew principal
+ *
+ * @param name          name
+ * @param facebookLikes number of FaceBook likes
+ */
 case class Principal(name: Name, facebookLikes: Int) {
   override def toString = s"$name ($facebookLikes likes)"
 }
 
 /**
-  * A name of a contributor to the production
-  *
-  * @param first  first name
-  * @param middle middle name or initial
-  * @param last   last name
-  * @param suffix suffix
-  */
+ * A name of a contributor to the production
+ *
+ * @param first  first name
+ * @param middle middle name or initial
+ * @param last   last name
+ * @param suffix suffix
+ */
 case class Name(first: String, middle: Option[String], last: String, suffix: Option[String]) {
   override def toString: String = {
     case class Result(r: StringBuffer) {
@@ -83,8 +83,8 @@ case class Name(first: String, middle: Option[String], last: String, suffix: Opt
 }
 
 /**
-  * The US rating
-  */
+ * The US rating
+ */
 case class Rating(code: String, age: Option[Int]) {
   override def toString: String = code + (age match {
     case Some(x) => "-" + x
@@ -101,7 +101,14 @@ object Movie extends App {
   //Hint: You may refer to the slides discussed in class for how to serialize object to json
   object MoviesProtocol extends DefaultJsonProtocol {
     // 20 points
-    // TO BE IMPLEMENTED 
+    // TO BE IMPLEMENTED
+    implicit val nameFormat: RootJsonFormat[Name] = jsonFormat4(Name.apply)
+    implicit val ratingFormat: RootJsonFormat[Rating] = jsonFormat2(Rating.apply)
+    implicit val principalFormat: RootJsonFormat[Principal] = jsonFormat2(Principal.apply)
+    implicit val reviewsFormat: RootJsonFormat[Reviews] = jsonFormat7(Reviews.apply)
+    implicit val productionFormat: RootJsonFormat[Production] = jsonFormat4(Production.apply)
+    implicit val formatFormat: RootJsonFormat[Format] = jsonFormat4(Format.apply)
+    implicit val movieFormat: RootJsonFormat[Movie] = jsonFormat11(Movie.apply)
     // END SOLUTION
   }
 
@@ -122,8 +129,11 @@ object Movie extends App {
   //Hint: Serialize the input to Json format and deserialize back to Object, check the result is still equal to original input.
   def testSerializationAndDeserialization(ms: Seq[Movie]): Boolean = {
     // 5 points
-    // TO BE IMPLEMENTED 
-???
+    // TO BE IMPLEMENTED
+    import MoviesProtocol._
+    val serialized = ms.toJson
+    val deserialized = serialized.convertTo[Seq[Movie]]
+    ms == deserialized
   }
 
   def getMoviesFromCountry(country: String, movies: Iterator[Try[Movie]]): Try[Seq[Movie]] = {
@@ -133,12 +143,12 @@ object Movie extends App {
   }
 
   /**
-    * Form a list from the elements explicitly specified (by position) from the given list
-    *
-    * @param list    a list of Strings
-    * @param indices a variable number of index values for the desired elements
-    * @return a list of Strings containing the specified elements in order
-    */
+   * Form a list from the elements explicitly specified (by position) from the given list
+   *
+   * @param list    a list of Strings
+   * @param indices a variable number of index values for the desired elements
+   * @return a list of Strings containing the specified elements in order
+   */
   def elements(list: Seq[String], indices: Int*): List[String] = {
     val x = mutable.ListBuffer[String]()
     for (i <- indices) x += list(i)
@@ -146,11 +156,11 @@ object Movie extends App {
   }
 
   /**
-    * Alternative apply method for the Movie class
-    *
-    * @param ws a sequence of Strings
-    * @return a Movie
-    */
+   * Alternative apply method for the Movie class
+   *
+   * @param ws a sequence of Strings
+   * @return a Movie
+   */
   def parse(ws: Seq[String]): Try[Movie] = {
     // we ignore facenumber_in_poster.
     val title = ws(11)
@@ -229,11 +239,11 @@ object Rating {
   private val rRating = """^(\w*)(-(\d\d))?$""".r
 
   /**
-    * Alternative apply method for the Rating class such that a single String is decoded
-    *
-    * @param s a String made up of a code, optionally followed by a dash and a number, e.g. "R" or "PG-13"
-    * @return a Rating
-    */
+   * Alternative apply method for the Rating class such that a single String is decoded
+   *
+   * @param s a String made up of a code, optionally followed by a dash and a number, e.g. "R" or "PG-13"
+   * @return a Rating
+   */
   def parse(s: String): Try[Rating] =
     s match {
       case rRating(code, _, age) => Success(apply(code, Try(age.toInt).toOption))
